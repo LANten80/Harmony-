@@ -86,9 +86,9 @@ export struct TargetList {
         console.info('TargetList.confirmDelete UI状态已更新，删除完成');
       } catch (err) {
         console.error('TargetList.confirmDelete 删除操作失败:', JSON.stringify(err));
-        // 删除失败时，仍然更新UI状态，但可以提示用户
-        this.updateSelectArray();
-        this.isEditMode = false;
+        // 删除失败时，不清空选中状态，保持编辑模式，让用户可以重试
+        // 可以在这里添加用户提示，比如显示错误消息
+        // 注意：不更新UI状态，让用户知道删除失败
       }
     }
   }
@@ -304,7 +304,7 @@ export struct TargetList {
 
       // 删除确认对话框（带遮罩层）
       if (this.deleteDialogVisible) {
-        // 半透明遮罩层，遮挡后面的内容（提高不透明度，确保后面的内容不可见）
+        // 半透明遮罩层，遮挡后面的内容
         Column()
           .width('100%')
           .height('100%')
@@ -315,24 +315,67 @@ export struct TargetList {
             this.handleDeleteCancel();
           })
         
-        // 对话框内容（在遮罩层之上显示）
-        AlertDialog({
-          primaryTitle: '确认删除',
-          content: `确定要删除选中的 ${this.pendingDeleteIds.length} 个工单吗？此操作不可恢复。`,
-          primaryButton: {
-            value: '取消',
-            action: () => {
-              this.handleDeleteCancel();
+        // 自定义对话框内容（在遮罩层之上显示）
+        Column() {
+          Column() {
+            // 标题
+            Text('确认删除')
+              .fontSize(20)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#182431')
+              .margin({ top: 24, bottom: 16 })
+            
+            // 内容
+            Text(`确定要删除选中的 ${this.pendingDeleteIds.length} 个工单吗？\n此操作不可恢复。`)
+              .fontSize(16)
+              .fontColor('#666666')
+              .textAlign(TextAlign.Center)
+              .lineHeight(24)
+              .margin({ bottom: 32 })
+            
+            // 按钮区域
+            Row() {
+              // 取消按钮
+              Button('取消')
+                .type(ButtonType.Normal)
+                .backgroundColor('#F0F0F0')
+                .fontColor('#182431')
+                .fontSize(16)
+                .width('48%')
+                .height(48)
+                .borderRadius(8)
+                .onClick(() => {
+                  this.handleDeleteCancel();
+                })
+              
+              // 删除按钮（更明显）
+              Button('删除')
+                .type(ButtonType.Normal)
+                .backgroundColor('#FF3B30')
+                .fontColor('#FFFFFF')
+                .fontSize(16)
+                .fontWeight(FontWeight.Bold)
+                .width('48%')
+                .height(48)
+                .borderRadius(8)
+                .onClick(() => {
+                  this.handleDeleteConfirm();
+                })
             }
-          },
-          secondaryButton: {
-            value: '删除',
-            fontColor: '#FF3B30',
-            action: () => {
-              this.handleDeleteConfirm();
-            }
+            .width('100%')
+            .justifyContent(FlexAlign.SpaceBetween)
+            .margin({ bottom: 24 })
           }
-        })
+          .width('80%')
+          .backgroundColor('#FFFFFF')
+          .borderRadius(16)
+          .padding({ left: 24, right: 24 })
+          .shadow({ radius: 24, color: '#33000000', offsetX: 0, offsetY: 8 })
+        }
+        .width('100%')
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
       }
     }
     .width('100%')

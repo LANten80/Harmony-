@@ -4,7 +4,7 @@
  * 注意：这是一个组件，不是独立页面，不需要 @Entry 装饰器
  */
 
-import { AuthService } from '../viewmodel/AuthService';
+import { AuthServiceWithHttp } from '../viewmodel/AuthServiceWithHttp';
 import { UserModel } from '../viewmodel/UserModel';
 import { formatDateTime, formatDate } from '../common/utils/DateUtil';
 import { router } from '@kit.ArkUI';
@@ -20,8 +20,8 @@ export struct UserPage {
   // 当前登录用户
   @State currentUser: UserModel | null = null;
 
-  // 认证服务实例
-  private authService: AuthService = AuthService.getInstance();
+  // 认证服务实例（使用HTTP版本）
+  private authService: AuthServiceWithHttp = AuthServiceWithHttp.getInstance();
 
   // 应用上下文（使用声明式方式获取）
   private context: common.UIAbilityContext | null = null;
@@ -106,6 +106,7 @@ export struct UserPage {
       if (contextValue) {
         this.context = contextValue;
         this.authService.setContext(contextValue);
+        this.authService.setUseHttp(true); // 启用HTTP请求
         console.info('UserPage.initContext: 获取上下文成功');
       } else {
         console.warn('UserPage.initContext: 获取上下文失败');

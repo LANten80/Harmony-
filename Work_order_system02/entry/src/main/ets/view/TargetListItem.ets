@@ -55,11 +55,11 @@ export struct TargetListItem {
   }
 
   /**
-   * 更新进度
+   * 更新进度（异步，通过后端API）
    */
-  updateProgress(progress: number): void {
+  async updateProgress(progress: number): Promise<void> {
     console.info('TargetListItem.updateProgress: 开始更新进度, taskId:', this.taskItem.id, 'progress:', progress);
-    const success = this.dataModel.updateProgress(this.taskItem.id, progress);
+    const success = await this.dataModel.updateProgress(this.taskItem.id, progress);
     console.info('TargetListItem.updateProgress: 更新结果:', success);
     if (success) {
       // 更新本地 taskItem 的进度值，确保UI立即显示新值
@@ -169,8 +169,8 @@ export struct TargetListItem {
               this.clickIndex = -1;
               this.lastClickIndex = -1;
             },
-            onClickOK: (progress: number) => {
-              this.updateProgress(progress);
+            onClickOK: async (progress: number) => {
+              await this.updateProgress(progress);
             }
           })
         }

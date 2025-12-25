@@ -4,7 +4,7 @@
  */
 
 import { router } from '@kit.ArkUI';
-import { AuthService } from '../viewmodel/AuthService';
+import { AuthServiceWithHttp } from '../viewmodel/AuthServiceWithHttp';
 import { common } from '@kit.AbilityKit';
 
 /**
@@ -22,7 +22,7 @@ struct LoginPage {
   @State errorMessage: string = '';
   @State isLoading: boolean = false;
 
-  private authService: AuthService = AuthService.getInstance();
+  private authService: AuthServiceWithHttp = AuthServiceWithHttp.getInstance();
 
   /**
    * 页面即将显示时调用
@@ -42,6 +42,7 @@ struct LoginPage {
 
       if (contextValue) {
         this.authService.setContext(contextValue);
+        this.authService.setUseHttp(true); // 启用HTTP请求
         console.info('LoginPage.initContext: 获取上下文成功');
       } else {
         console.warn('LoginPage.initContext: 获取上下文失败');

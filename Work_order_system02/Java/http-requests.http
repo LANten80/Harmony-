@@ -1,0 +1,117 @@
+### ============================================
+### 工单系统 API 测试请求
+### 在 IDEA 中可以直接运行这些请求
+### ============================================
+
+### 变量定义
+@baseUrl = http://localhost:8080/api
+@token = your_token_here
+
+### ============================================
+### 1. 用户注册
+### ============================================
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "phone": "13800138000",
+  "password": "password123"
+}
+
+### ============================================
+### 2. 用户登录
+### ============================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "account": "testuser",
+  "password": "password123",
+  "rememberMe": false
+}
+
+### 注意：登录成功后，将返回的token复制到上面的 @token 变量中
+
+### ============================================
+### 3. 获取用户信息（需要Token）
+### ============================================
+GET {{baseUrl}}/user/info
+Authorization: Bearer {{token}}
+
+### ============================================
+### 4. 根据用户ID获取用户信息
+### ============================================
+GET {{baseUrl}}/user/user_1234567890_abc12345
+
+### ============================================
+### 5. 创建工单（需要Token）
+### ============================================
+POST {{baseUrl}}/task/create
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "taskName": "完成项目文档",
+  "description": "编写项目开发文档",
+  "progressValue": 0,
+  "status": "pending",
+  "priority": "high",
+  "dueDate": "2024-12-31T23:59:59",
+  "category": "文档",
+  "tags": ["重要", "紧急"]
+}
+
+### ============================================
+### 6. 获取工单列表（分页，需要Token）
+### ============================================
+GET {{baseUrl}}/task/list?page=0&size=10
+Authorization: Bearer {{token}}
+
+### ============================================
+### 7. 获取工单详情（需要Token）
+### ============================================
+GET {{baseUrl}}/task/task_1234567890_abc12345
+Authorization: Bearer {{token}}
+
+### ============================================
+### 8. 更新工单（需要Token）
+### ============================================
+PUT {{baseUrl}}/task/task_1234567890_abc12345
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "taskName": "完成项目文档（已更新）",
+  "description": "编写项目开发文档",
+  "progressValue": 50,
+  "status": "in_progress",
+  "priority": "high",
+  "category": "文档",
+  "tags": ["重要", "进行中"]
+}
+
+### ============================================
+### 9. 根据状态获取工单列表（需要Token）
+### ============================================
+GET {{baseUrl}}/task/status/pending
+Authorization: Bearer {{token}}
+
+### ============================================
+### 10. 根据优先级获取工单列表（需要Token）
+### ============================================
+GET {{baseUrl}}/task/priority/high
+Authorization: Bearer {{token}}
+
+### ============================================
+### 11. 删除工单（需要Token）
+### ============================================
+DELETE {{baseUrl}}/task/task_1234567890_abc12345
+Authorization: Bearer {{token}}
+
+### ============================================
+### 12. 退出登录
+### ============================================
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+

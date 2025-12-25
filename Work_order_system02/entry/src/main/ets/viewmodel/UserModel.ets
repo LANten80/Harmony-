@@ -88,6 +88,7 @@ export interface SessionData {
   currentUserId: string;
   rememberMe: boolean;
   loginTime: string;
+  token?: string; // 认证token（可选）
 }
 
 

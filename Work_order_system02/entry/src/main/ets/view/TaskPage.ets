@@ -87,9 +87,28 @@ export struct TaskPage {
         this.context = contextValue;
         this.dataModel.setContext(contextValue);
         console.info('TaskPage.initContext: 获取上下文成功');
-        // 只在首次初始化时从存储加载数据
-        if (!this.dataInitialized) {
-          // 从存储加载数据
+        
+        // 检查数据是否为空，如果为空则强制重新加载（即使已经初始化过）
+        const currentData = this.dataModel.getData();
+        console.error('🔵🔵🔵 TaskPage.initContext: 当前数据数量: ' + String(currentData.length));
+        console.error('🔵🔵🔵 TaskPage.initContext: dataInitialized=' + String(this.dataInitialized));
+        if (currentData.length === 0) {
+          console.error('⚠️⚠️⚠️ TaskPage.initContext: 检测到数据为空，强制重新加载！');
+          this.dataModel.reloadDataFromStorage().then(() => {
+            const reloadedData = this.dataModel.getData();
+            console.error('✅✅✅ TaskPage.initContext: 重新加载完成，工单数: ' + String(reloadedData.length));
+            console.error('✅✅✅ TaskPage.initContext: 重新加载的工单ID列表: ' + JSON.stringify(reloadedData.map(item => item.id)));
+            this.loadData();
+            this.calculateStatistics();
+            this.dataInitialized = true;
+          }).catch((err: Error) => {
+            console.error('❌❌❌ TaskPage.initContext: 重新加载数据失败: ' + JSON.stringify(err));
+            this.loadData();
+            this.calculateStatistics();
+            this.dataInitialized = true;
+          });
+        } else if (!this.dataInitialized) {
+          // 只在首次初始化时从存储加载数据
           this.dataModel.loadDataFromStorage().then(() => {
             this.loadData();
             this.calculateStatistics();
@@ -101,7 +120,7 @@ export struct TaskPage {
             this.dataInitialized = true;
           });
         } else {
-          // 已经初始化过，只使用内存中的数据
+          // 已经初始化过且数据不为空，只使用内存中的数据
           this.loadData();
           this.calculateStatistics();
         }
@@ -198,9 +217,9 @@ export struct TaskPage {
   }
 
   /**
-   * 保存工单
+   * 保存工单（异步，通过后端API）
    */
-  saveTask(taskName: string): void {
+  async saveTask(taskName: string): Promise<void> {
     console.info('TaskPage.saveTask: 方法被调用，工单名称:', taskName);
     if (!taskName || taskName.trim().length === 0) {
       console.warn('TaskPage.saveTask: 工单名称为空，取消添加');
@@ -208,7 +227,7 @@ export struct TaskPage {
     }
 
     console.info('TaskPage.saveTask: 开始添加工单:', taskName, '当前工单数:', this.targetData.length);
-    const success = this.dataModel.addData(taskName);
+    const success = await this.dataModel.addData(taskName);
     console.info('TaskPage.saveTask: addData 返回结果:', success);
     
     if (success) {
@@ -243,14 +262,28 @@ export struct TaskPage {
   async deleteTasks(taskIds: string[]): Promise<void> {
     console.info('TaskPage.deleteTasks: 开始删除工单, taskIds:', taskIds);
     try {
-      await this.dataModel.deleteTasks(taskIds);
-      // 删除后刷新数据
-      this.loadData();
-      this.calculateStatistics();
-      this.overAllProgressChanged++;
-      console.info('TaskPage.deleteTasks: 删除完成，当前工单数:', this.targetData.length);
+      const deletedCount = await this.dataModel.deleteTasks(taskIds);
+      if (deletedCount > 0) {
+        // 删除成功，刷新数据
+        this.loadData();
+        this.calculateStatistics();
+        this.overAllProgressChanged++;
+        console.info('TaskPage.deleteTasks: 删除成功，删除了 ' + deletedCount + ' 个工单，当前工单数:', this.targetData.length);
+      } else {
+        // 删除失败，不刷新数据
+        console.warn('TaskPage.deleteTasks: 删除失败，没有工单被删除');
+        // 可以在这里添加用户提示，比如显示错误消息
+      }
     } catch (err) {
       console.error('TaskPage.deleteTasks 删除操作异常:', JSON.stringify(err));
+      // 删除失败时，不刷新数据，保持UI状态
+      // 可以在这里添加用户提示，比如显示错误消息
+      // ArkTS只允许throw Error对象
+      if (err instanceof Error) {
+        throw err;
+      } else {
+        throw new Error(`删除工单失败: ${JSON.stringify(err)}`);
+      }
     }
   }
 
@@ -320,9 +353,30 @@ export struct TaskPage {
       if (!this.context) {
         this.initContext();
       } else {
-        // 上下文已存在，只刷新内存中的数据（不重新从存储加载，避免覆盖删除操作）
-        this.loadData();
-        this.calculateStatistics();
+        // 检查数据是否为空，如果为空且DataModel未加载过，则强制重新加载
+        const currentData = this.dataModel.getData();
+        console.error('🔵🔵🔵 TaskPage.onAppear: 当前数据数量: ' + String(currentData.length));
+        if (currentData.length === 0) {
+          // 数据为空，检查是否需要重新加载
+          // 通过检查DataModel的dataLoadedFromApi标志来判断
+          // 如果dataLoadedFromApi为false，说明数据被清除了，需要重新加载
+          console.error('⚠️⚠️⚠️ TaskPage.onAppear: 检测到数据为空，尝试重新加载！');
+          this.dataModel.reloadDataFromStorage().then(() => {
+            const reloadedData = this.dataModel.getData();
+            console.error('✅✅✅ TaskPage.onAppear: 重新加载完成，工单数: ' + String(reloadedData.length));
+            console.error('✅✅✅ TaskPage.onAppear: 重新加载的工单ID列表: ' + JSON.stringify(reloadedData.map(item => item.id)));
+            this.loadData();
+            this.calculateStatistics();
+          }).catch((err: Error) => {
+            console.error('❌❌❌ TaskPage.onAppear: 重新加载数据失败: ' + JSON.stringify(err));
+            this.loadData();
+            this.calculateStatistics();
+          });
+        } else {
+          // 上下文已存在，只刷新内存中的数据（不重新从存储加载，避免覆盖删除操作）
+          this.loadData();
+          this.calculateStatistics();
+        }
       }
     })
   }

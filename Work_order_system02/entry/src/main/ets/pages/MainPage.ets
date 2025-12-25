@@ -7,7 +7,7 @@ import { TaskItemModel } from '../viewmodel/TaskItemModel';
 import { DataModel } from '../viewmodel/DataModel';
 import { TargetList } from '../view/TargetList';
 import { AddTargetDialog } from '../view/AddTargetDialog';
-import { AuthService } from '../viewmodel/AuthService';
+import { AuthServiceWithHttp } from '../viewmodel/AuthServiceWithHttp';
 import { UserModel } from '../viewmodel/UserModel';
 import { formatDateTime, formatDate } from '../common/utils/DateUtil';
 import { router } from '@kit.ArkUI';
@@ -34,7 +34,7 @@ struct MainPage {
   private dataModel: DataModel = DataModel.getInstance();
 
   // 认证服务实例
-  private authService: AuthService = AuthService.getInstance();
+  private authService: AuthServiceWithHttp = AuthServiceWithHttp.getInstance();
 
   // 当前登录用户
   @State currentUser: UserModel | null = null;
@@ -56,8 +56,8 @@ struct MainPage {
       this.dialogController = new CustomDialogController({
         builder: AddTargetDialog({
           controller: this.dialogController,
-          onClickOk: (taskName: string) => {
-            this.saveTask(taskName);
+          onClickOk: async (taskName: string) => {
+            await this.saveTask(taskName);
           }
         }),
         alignment: DialogAlignment.Bottom,
@@ -72,12 +72,13 @@ struct MainPage {
     // 初始化上下文（使用声明式方式）
     this.initContext();
 
-    // 检查登录状态
-    this.checkLoginStatus();
+    // 检查登录状态（必须等待完成，确保token已恢复）
+    await this.checkLoginStatus();
     
     // 只在首次初始化时从存储加载数据
     if (!this.dataInitialized) {
       // 加载数据并注册监听器
+      await this.dataModel.loadDataFromStorage();
       this.loadData();
       console.info('MainPage.aboutToAppear: 初始数据加载完成，工单数:', this.targetData.length);
       this.dataInitialized = true;
@@ -97,14 +98,17 @@ struct MainPage {
   }
 
   /**
-   * 检查登录状态
+   * 检查登录状态（同时恢复token）
    */
   private async checkLoginStatus(): Promise<void> {
     try {
+      // checkLoginStatus 内部会恢复 token
       const user = await this.authService.checkLoginStatus();
       if (user) {
         this.currentUser = user;
+        console.info('MainPage.checkLoginStatus: 登录状态检查成功，用户已登录');
       } else {
+        console.warn('MainPage.checkLoginStatus: 用户未登录，跳转到登录页');
         // 未登录，跳转到登录页
         try {
           router.replaceUrl({
@@ -243,28 +247,37 @@ struct MainPage {
   }
 
   /**
-   * 保存工单
+   * 保存工单（异步，通过后端API）
    */
-  saveTask(taskName: string): void {
-    console.info('MainPage.saveTask: 方法被调用，工单名称:', taskName);
+  async saveTask(taskName: string): Promise<void> {
+    console.info('MainPage.saveTask: 方法被调用，工单名称: ' + taskName);
     if (!taskName || taskName.trim().length === 0) {
       console.warn('MainPage.saveTask: 工单名称为空，取消添加');
       return;
     }
 
-    console.info('MainPage.saveTask: 开始添加工单:', taskName, '当前工单数:', this.targetData.length);
-    const success = this.dataModel.addData(taskName);
-    console.info('MainPage.saveTask: addData 返回结果:', success);
-    
-    if (success) {
-      console.info('MainPage.saveTask: 工单添加成功，开始刷新数据');
-      // 立即刷新数据，确保UI更新
-      this.loadData();
-      this.overAllProgressChanged++;
-      console.info('MainPage.saveTask: 数据刷新完成，当前工单数:', this.targetData.length);
-      console.info('MainPage.saveTask: 当前工单ID列表:', this.targetData.map(item => item.id));
-    } else {
-      console.warn('MainPage.saveTask: 工单添加失败');
+    console.info('MainPage.saveTask: 开始添加工单: ' + taskName + ', 当前工单数: ' + String(this.targetData.length));
+    try {
+      const success = await this.dataModel.addData(taskName);
+      console.info('MainPage.saveTask: addData 返回结果: ' + String(success));
+      
+      if (success) {
+        console.info('MainPage.saveTask: 工单添加成功，开始刷新数据');
+        // 立即刷新数据，确保UI更新
+        await this.dataModel.reloadDataFromStorage();
+        this.loadData();
+        this.overAllProgressChanged++;
+        console.info('MainPage.saveTask: 数据刷新完成，当前工单数: ' + String(this.targetData.length));
+        console.info('MainPage.saveTask: 当前工单ID列表: ' + JSON.stringify(this.targetData.map(item => item.id)));
+      } else {
+        console.error('MainPage.saveTask: 工单添加失败，请检查网络连接和后端服务');
+        // 可以在这里添加用户提示，比如显示错误消息
+      }
+    } catch (err) {
+      console.error('MainPage.saveTask: 添加工单异常: ' + JSON.stringify(err));
+      if (err instanceof Error) {
+        console.error('MainPage.saveTask: 错误信息: ' + err.message);
+      }
     }
   }
 
