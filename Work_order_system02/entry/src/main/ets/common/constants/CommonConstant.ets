@@ -46,7 +46,8 @@ export const OPACITY_HOVER = 0.8;
 // 如果HarmonyOS应用运行在本地模拟器，使用 http://10.0.2.2:8080/api（模拟器访问宿主机的特殊地址）
 // 如果HarmonyOS应用运行在真机上，使用电脑的局域网IP，例如：http://192.168.1.100:8080/api
 // 如果后端部署在服务器上，使用服务器地址，例如：http://your-server.com:8080/api
-export const BASE_URL = 'http://10.0.2.2:8080/api';
+// ✅ 已配置为阿里云服务器地址
+export const BASE_URL = 'http://8.148.255.83:8080/api';
 // 请求超时时间（毫秒）
 export const REQUEST_TIMEOUT = 10000;
 

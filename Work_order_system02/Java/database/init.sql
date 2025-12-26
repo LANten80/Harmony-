@@ -13,9 +13,15 @@ DEFAULT COLLATE utf8mb4_unicode_ci;
 USE `work_order_system`;
 
 -- ============================================
+-- 删除表（按依赖关系顺序：先删除有外键的表）
+-- ============================================
+DROP TABLE IF EXISTS `user_tokens`;
+DROP TABLE IF EXISTS `tasks`;
+DROP TABLE IF EXISTS `users`;
+
+-- ============================================
 -- 1. 用户表 (users)
 -- ============================================
-DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` VARCHAR(64) NOT NULL COMMENT '用户ID',
   `username` VARCHAR(50) NOT NULL COMMENT '用户名',
@@ -35,7 +41,6 @@ CREATE TABLE `users` (
 -- ============================================
 -- 2. 工单表 (tasks)
 -- ============================================
-DROP TABLE IF EXISTS `tasks`;
 CREATE TABLE `tasks` (
   `id` VARCHAR(64) NOT NULL COMMENT '工单ID',
   `task_name` VARCHAR(200) NOT NULL COMMENT '工单名称',
@@ -61,9 +66,8 @@ CREATE TABLE `tasks` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='工单表';
 
 -- ============================================
--- 3. 用户Token表 (user_tokens) - 可选
+-- 3. 用户Token表 (user_tokens)
 -- ============================================
-DROP TABLE IF EXISTS `user_tokens`;
 CREATE TABLE `user_tokens` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增ID',
   `user_id` VARCHAR(64) NOT NULL COMMENT '用户ID',
@@ -76,21 +80,3 @@ CREATE TABLE `user_tokens` (
   KEY `idx_expire_time` (`expire_time`),
   CONSTRAINT `fk_token_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户Token表';
-
--- ============================================
--- 初始化测试数据（可选）
--- ============================================
-
--- 插入测试用户（密码为: password123，实际使用时应该使用BCrypt加密）
---INSERT INTO `users` (`id`, `username`, `phone`, `password`, `register_time`, `last_login_time`, `status`) 
---VALUES 
---('user_001', 'admin', '13800138000', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', NOW(), NULL, 1),
--- ('user_002', 'testuser', '13800138001', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', NOW(), NULL, 1);
-
--- ============================================
--- 查询验证
--- ============================================
--- SELECT * FROM `users`;
--- SELECT * FROM `tasks`;
--- SELECT * FROM `user_tokens`;
-

@@ -220,29 +220,18 @@ struct RegisterPage {
               .alignSelf(ItemAlign.Start)
               .margin({ bottom: 8 })
 
-            Row() {
-              TextInput({ placeholder: '请输入密码（6-20位，包含字母和数字）' })
-                .type(this.showPassword ? InputType.Normal : InputType.Password)
-                .backgroundColor('#F5F5F5')
-                .borderRadius(8)
-                .height(48)
-                .fontSize(16)
-                .fontColor('#182431')
-                .layoutWeight(1)
-                .onChange((value: string) => {
-                  this.password = value;
-                  this.errorMessage = ''; // 输入时清空错误信息
-                })
-
-              Image(this.showPassword ? $r('app.media.foreground') : $r('app.media.foreground'))
-                .width(24)
-                .height(24)
-                .margin({ left: 12 })
-                .onClick(() => {
-                  this.togglePasswordVisibility();
-                })
-            }
-            .width('100%')
+            TextInput({ placeholder: '请输入密码（6-20位，包含字母和数字）' })
+              .type(this.showPassword ? InputType.Normal : InputType.Password)
+              .backgroundColor('#F5F5F5')
+              .borderRadius(8)
+              .height(48)
+              .width('100%')
+              .fontSize(16)
+              .fontColor('#182431')
+              .onChange((value: string) => {
+                this.password = value;
+                this.errorMessage = ''; // 输入时清空错误信息
+              })
           }
           .width('100%')
           .margin({ bottom: 20 })
@@ -255,29 +244,18 @@ struct RegisterPage {
               .alignSelf(ItemAlign.Start)
               .margin({ bottom: 8 })
 
-            Row() {
-              TextInput({ placeholder: '请确认密码' })
-                .type(this.showConfirmPassword ? InputType.Normal : InputType.Password)
-                .backgroundColor('#F5F5F5')
-                .borderRadius(8)
-                .height(48)
-                .fontSize(16)
-                .fontColor('#182431')
-                .layoutWeight(1)
-                .onChange((value: string) => {
-                  this.confirmPassword = value;
-                  this.errorMessage = ''; // 输入时清空错误信息
-                })
-
-              Image(this.showConfirmPassword ? $r('app.media.foreground') : $r('app.media.foreground'))
-                .width(24)
-                .height(24)
-                .margin({ left: 12 })
-                .onClick(() => {
-                  this.toggleConfirmPasswordVisibility();
-                })
-            }
-            .width('100%')
+            TextInput({ placeholder: '请确认密码' })
+              .type(this.showConfirmPassword ? InputType.Normal : InputType.Password)
+              .backgroundColor('#F5F5F5')
+              .borderRadius(8)
+              .height(48)
+              .width('100%')
+              .fontSize(16)
+              .fontColor('#182431')
+              .onChange((value: string) => {
+                this.confirmPassword = value;
+                this.errorMessage = ''; // 输入时清空错误信息
+              })
           }
           .width('100%')
           .margin({ bottom: 24 })

@@ -217,16 +217,26 @@ export class DataModel {
           const nestedData = responseDataParsed['data'];
           if (nestedData && typeof nestedData === 'object') {
             const nestedDataStr = JSON.stringify(nestedData);
-            const nestedDataParsed = JSON.parse(nestedDataStr) as Record<string, ApiTaskData[]>;
-            // 兼容不同的后端响应格式：list 或 data
-            taskList = (nestedDataParsed['list'] || nestedDataParsed['data'] || []) as ApiTaskData[];
-            logger.info('DataModel.loadDataFromStorage: 检测到嵌套格式，从data字段提取列表数据');
+            const nestedDataParsed = JSON.parse(nestedDataStr) as Record<string, ApiTaskData[] | Record<string, ApiTaskData[]>>;
+            // 兼容不同的后端响应格式：content（Spring分页格式）、list 或 data
+            if (nestedDataParsed['content'] && Array.isArray(nestedDataParsed['content'])) {
+              taskList = nestedDataParsed['content'] as ApiTaskData[];
+              logger.info('DataModel.loadDataFromStorage: 检测到嵌套格式，从data.content字段提取列表数据');
+            } else {
+              taskList = (nestedDataParsed['list'] || nestedDataParsed['data'] || []) as ApiTaskData[];
+              logger.info('DataModel.loadDataFromStorage: 检测到嵌套格式，从data字段提取列表数据（list或data）');
+            }
           }
         } else {
           // 非嵌套格式：直接使用response.data
-          // 兼容不同的后端响应格式：list 或 data
-          taskList = (responseDataParsed['list'] || responseDataParsed['data'] || []) as ApiTaskData[];
-          logger.info('DataModel.loadDataFromStorage: 使用非嵌套格式的响应数据');
+          // 兼容不同的后端响应格式：content（Spring分页格式）、list 或 data
+          if (responseDataParsed['content'] && Array.isArray(responseDataParsed['content'])) {
+            taskList = responseDataParsed['content'] as ApiTaskData[];
+            logger.info('DataModel.loadDataFromStorage: 使用非嵌套格式的响应数据（content）');
+          } else {
+            taskList = (responseDataParsed['list'] || responseDataParsed['data'] || []) as ApiTaskData[];
+            logger.info('DataModel.loadDataFromStorage: 使用非嵌套格式的响应数据（list或data）');
+          }
         }
         
         logger.info('DataModel.loadDataFromStorage: 从后端加载的数据数量:', String(taskList.length));
